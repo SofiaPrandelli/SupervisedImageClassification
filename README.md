@@ -8,3 +8,6 @@ It is possible to change the test area by uploading in the GEE platform the geor
 The classification was performed more than once, by filtering the mosaic with buffers around the railway infrastructure of different width. It is possible to change this parameter at line 50 of GEE script, that is actually setted as 10 meters. 
 ### Groun Control points
 
+### Railways shapefile
+pre-processing:
+
