@@ -1,0 +1,498 @@
+
+//////////// AOI TIFF IMAGES ///////////
+var guid7 = ee.Image('projects/ee-sofiaprandelli/assets/Guidonia/orto_guidonia_gauss_07')
+    .reproject('EPSG:3857');
+var guid8 = ee.Image('projects/ee-sofiaprandelli/assets/Guidonia/orto_guidonia_gauss_08')
+    .reproject('EPSG:3857');
+var guid10 = ee.Image('projects/ee-sofiaprandelli/assets/Guidonia/orto_guidonia_gauss_10')
+    .reproject('EPSG:3857');
+var guid13 = ee.Image('projects/ee-sofiaprandelli/assets/Guidonia/orto_guidonia_gauss_13')
+    .reproject('EPSG:3857');
+/*Map.addLayer(guid7.geometry(), {color: 'FF0000'}, '7');
+Map.addLayer(guid8.geometry(), {color: 'FF0000'}, '8');
+Map.addLayer(guid10.geometry(), {color: 'FF0000'}, '10');
+Map.addLayer(guid13.geometry(), {color: 'FF0000'}, '13');*/
+
+var ICguid = ee.ImageCollection.fromImages([guid7, guid10, guid13]);
+var guid = ICguid.mosaic();
+//Map.addLayer(guid, {}, 'Mosaic');
+print('Guidonia ortophoto 13, resolution:', guid13.projection().nominalScale());
+
+print('Projection Guidonia ortophoto:', guid.projection());
+print('image geometry', ICguid.geometry());
+print('ICguid infos', ICguid.getInfo());
+
+
+var polygon = ICguid.geometry();
+Map.addLayer(polygon, {color: 'red'}, 'Study area');
+print('Mosaic Coordinates:', polygon);
+
+//////////// IMPORT RAIL COLLECTION //////////
+// Tratta ferroviarie unificate e filtrate (analisi su R, file "hardDisk/eco_corridors.Rmd)
+var rail = ee.FeatureCollection('projects/ee-sofiaprandelli/assets/Railway/filtered-rail');
+//print(rail);
+// Number of features
+var count = rail.size();
+print("Number of italian railways features", count);
+
+// Filter rail in the test area
+var filter_rail = rail.filterBounds(polygon);
+Map.addLayer(filter_rail, {color: 'blue'}, 'Railways (test area)');
+var count_filter_rail =  filter_rail.size();
+print("Number of filtered railway (test area)", count_filter_rail);
+
+var filter_rail_lenght = filter_rail.geometry().length();
+print('filter rail lenght (m)', filter_rail_lenght);
+
+// CREATE BUFFER around rail in test area
+var railbuff10 = filter_rail.map(function(feature) {
+  return feature.buffer(20);
+});
+print(railbuff10.first(), '10 m rail buffer');
+print(railbuff10);
+//Map.addLayer(railbuff10, {color:'yellow'}, '10 m rail buffer');
+
+//Dissolve FC
+var railbuff10_diss = railbuff10.union().first();
+//print(railbuff10_diss);
+
+// Total area in the buffer
+var railbuff10_diss_area = railbuff10_diss.geometry().area();
+//var railbuff10_diss_AreaSqKm = ee.Number(railbuff10_diss_area).divide(1e6).round()
+print('Total area in the buffer (m2)', railbuff10_diss_area);
+
+
+//DOWNSCALING TIFF IMAGE
+print(guid.projection());
+
+var guid_reduced = guid
+    .reproject({
+      crs: "EPSG:3857",
+      scale: 1.0
+    });
+    
+print('Guidonia reduced', guid_reduced);
+print('Guidonia reduced resolution:', guid_reduced.projection().nominalScale());
+
+// Filter raster Image by buffer zone, clip the raster image using the buffer
+var guid_filter = guid_reduced.clip(railbuff10);
+Map.addLayer(guid_filter, {}, 'Ortophoto Guidonia filtered');
+
+
+/////////// CREATE GROUND CONTROL POINTS using GUI tool //////////
+
+// uncomment next lines to create standardized layers, but add property "class" to every layer
+// you can also import layer with points already created from other scripts
+
+//var rails = /* color: #a2adb1 */ee.FeatureCollection([]),
+//    trees = /* color: #2b932c */ee.FeatureCollection([]),
+//    grass = /* color: #6ae058 */ee.FeatureCollection([]),
+//    bare = /* color: #e0df3e */ee.FeatureCollection([]),
+//    shrubs = /* color: #92cc61 */ee.FeatureCollection([]);
+
+// Set import as FeatureCollection
+// Add property 'class' and assign integer value starting from 0
+// Merge GCPs
+var gcps = rails.merge(trees).merge(grass).merge(bare).merge(shrubs);//.merge(built);
+print('GCPS', gcps);
+
+// To assess classification accuracy, we use only 70% of the data to train our classifier. The remaining 30% is used for validation
+// Add column of random numbers to the ground control points
+var gcps = gcps.randomColumn();
+var trainingGcps = gcps.filter(ee.Filter.lt('random', 0.7));
+var validationGcps = gcps.filter(ee.Filter.gte('random', 0.7));
+// Check sizes: attenzione a non sovrascrivere elementi, 
+print('Size of training Gcps', trainingGcps.size());
+print('Size of validation Gcps', validationGcps.size());
+
+// Overlay the point on the image to get training data
+var training = guid_filter.sampleRegions({
+  collection: trainingGcps, 
+  properties: ['class']/*, 
+  scale: 10*/
+});
+print('Training data', training);
+// Get band names from the image
+var bands = guid_filter.bandNames();
+
+// Train a RF classifier
+var classifier = ee.Classifier.smileRandomForest(70).train({
+  features: training, 
+  classProperty: 'class', 
+  inputProperties: bands
+});
+
+// CLASSIFY the image
+var classified = guid_filter.classify(classifier);
+print('Classified image', classified);
+var visParamsClass = {min: 0,
+  max: 4, 
+  palette:['#a2adb1', '#2b932c', '#6ae058', '#e0df3e', '#92cc61']
+};
+//Map.addLayer(classified, visParamsClass, 'Land cover classification (not smoothed)');
+
+// Smoothen classified map (area approximation)
+var classified_smooth = classified.focalMode(1.0,'square');
+//Map.addLayer(classified_smooth, visParamsClass, 'Land cover classification');
+
+// ACCURACY ASSESSMENT: for relaibility, at least 80%
+// Use classification map to assess accuracy using the validation fraction of the overall training set
+var test = classified_smooth.sampleRegions({ 
+  collection: validationGcps,
+  properties: ['class']/*,
+  scale: 10,*/
+});
+print('Test', test);
+
+// CONFUSION MATRIX (performance measurement for ML classification)
+var testConfusionMatrix = test.errorMatrix('class', 'classification');
+// .errorMatrix() create a simple error matrix from the validation data
+// The function uses the already known 'class' property and looks at the 'classification' property which represents how the classifier assigned the pixel
+print('Confusion Matrix', testConfusionMatrix);
+print('Test Accuracy', testConfusionMatrix.accuracy());
+
+// POST-PROCESSING CLASSIFICATION RESULTS
+// Removing noise caused by misclassified pixels: replace isolated pixels with surrounding value
+
+// Count patch sizes
+var patchsize = classified.connectedPixelCount(40, false);
+// Run a majority filter
+var filtered = classified.focal_mode({
+    radius: 10,
+    kernelType: 'square',
+    units: 'meters',
+}); 
+// UpdateD image with majority filter where patch size is small
+var connectedClassified =  classified.where(patchsize.lt(40),filtered);
+Map.addLayer(connectedClassified, {min: 0, max: 4, palette: ['#a2adb1', '#2b932c', '#6ae058', '#e0df3e', '#92cc61']}, 
+  'LC calssification (processed using Connected Pixels)');
+
+
+// Feature Importance
+//*************************************************************
+
+// Run .explain() to see what the classifer looks like
+print('Explain classifier:', classifier.explain());
+
+// Calculate variable importance
+var importance = ee.Dictionary(classifier.explain().get('importance'));
+
+// Calculate relative importance
+var sum = importance.values().reduce(ee.Reducer.sum());
+
+var relativeImportance = importance.map(function(key, val) {
+   return (ee.Number(val).multiply(100)).divide(sum)
+  });
+print('Relative importance:', relativeImportance);
+
+// Create a FeatureCollection to chart it
+var importanceFc = ee.FeatureCollection([
+  ee.Feature(null, relativeImportance)
+]);
+
+var chart = ui.Chart.feature.byProperty({
+  features: importanceFc
+}).setOptions({
+      title: 'Feature Importance',
+      vAxis: {title: 'Importance'},
+      hAxis: {title: 'Feature'}
+  });
+print(chart);
+
+// CALCULATE AREA BY CLASS
+
+// Create a 2 band image with the area image and the classified image
+var areaImage = ee.Image.pixelArea().addBands(connectedClassified);
+
+// Calculate areas
+var areas = areaImage.reduceRegion({
+      reducer: ee.Reducer.sum().group({
+      groupField: 1,
+      groupName: 'classification',
+    }),
+    geometry: railbuff10.geometry(),
+    scale: 10,
+    maxPixels: 1e30
+    }); 
+print('Total areas in buffer', areas);
+
+var classAreas = ee.List(areas.get('groups'));
+
+// Process results to extract the areas and create a FeatureCollection
+
+// define a dictionary (list) with class names
+var classNames = ee.Dictionary({
+  '0': 'rails',
+  '1': 'trees',
+  '2': 'grass',
+  '3': 'bare',
+  '4': 'shrubs'
+});
+
+var classAreas = classAreas.map(function(item) {
+  var areaDict = ee.Dictionary(item);
+  var classNumber = ee.Number(areaDict.get('classification')).format();
+  var className = classNames.get(classNumber);
+  var area = ee.Number(
+    areaDict.get('sum'));
+  return ee.Feature(null, {'class': classNumber, 'class_name': className, 'area': area});
+});
+
+var classAreaFc = ee.FeatureCollection(classAreas);
+
+// If area is large, first export the FC as an Asset and import it once the export is finished
+// Bar Chart
+var areaChart = ui.Chart.feature.byProperty({
+  features: classAreaFc,
+  xProperties: ['area'],
+  seriesProperty: 'class_name',
+}).setChartType('ColumnChart')
+  .setOptions({
+    hAxis: {title: 'Classes'},
+    vAxis: {title: 'Area m^2'},
+    title: 'Area by class',
+    series: {
+      0: { color: '#a2adb1' },
+      1: { color: '#2b932c' },
+      2: { color: '#6ae058' },
+      3: { color: '#e0df3e' },
+      4: { color: '#92cc61' }
+    }
+  });
+print(areaChart); 
+
+
+// Pie Chart
+var palette = ['#a2adb1', '#2b932c', '#6ae058', '#e0df3e', '#92cc61'];
+
+var areaChart = ui.Chart.feature.byFeature({
+  features: classAreaFc,
+  xProperty: 'class_name',
+  yProperties: ['area']
+}).setChartType('PieChart')
+  .setOptions({
+    hAxis: {title: 'Classes'},
+    vAxis: {title: 'Area (sq m)'},
+    title: 'Percentage of area by class',
+    colors: palette
+  });
+print(areaChart);
+
+
+/////////////// COPERNICUS CORINE LAND COVER LEVEL III DATA ANALYSIS ///////////////
+// 44 classes
+
+var corineIII = ee.Image('COPERNICUS/CORINE/V20/100m/2012');
+var corineIIILC = corineIII.select('landcover');
+
+// FILTER CorineLC by buffer zone in test area
+var corineIII_in_buffer = corineIIILC.clip(railbuff10);
+Map.addLayer(corineIII_in_buffer, {}, 'Corine LC (in buffer of 30 m)');
+print('Corine LC in buffer', corineIII_in_buffer);
+
+// AREA CALCULATION BY CLASSES
+var areaImageCorineIII = ee.Image.pixelArea().addBands(corineIII_in_buffer);
+print('Info Corine LC in buffer', areaImageCorineIII);
+
+var areaCorineIII = areaImageCorineIII
+    .reduceRegion({
+      reducer: ee.Reducer.sum().group({ //divide(1000000). dopo sum(). per calcolo in km2
+      groupField: 1,
+      groupName: 'Map',
+    }),
+    geometry: railbuff10_diss.geometry(),
+    scale: 10,
+    maxPixels: 1e10
+    });//.get('groups');
+
+print('Total areas in buffer (Corine LC)', areaCorineIII);
+
+// Process results to extract the areas and create FC
+// Define a dictionary with class names
+var classAreasCorineIII = ee.List(areaCorineIII.get('groups'));
+
+var classNamesCorineIII = ee.Dictionary({
+  '111':	'Continuous urban fabric',
+  '112':	'Discontinuous urban fabric',
+  '121':	'Industrial or commercial units',
+  '122':  'Road and rail networks and associated land',
+  '123':  'Port areas',
+  '124':  'Airports',
+  '131':  'Mineral extraction sites',
+  '132':  'Dump sites',
+  '133':  'mine, dump, and construction sites',
+  '141':  'Green urban areas',
+  '142':	'Sport and leisure facilities',
+  '211':	'Non-irrigated arable land',
+  '212':  'Port areas',
+  '213':  'Rice fields',
+  '221':  'Vineyards',
+  '222':  'Fruit trees and berry plantations',
+  '223':  'Olive groves',
+  '231':  'Pastures',
+  '241':  'Heterogeneous agricultural areas: Annual crops associated with permanent crops',
+  '242':	'Complex cultivation patterns',
+  '243':  'Land principally occupied by agriculture, with significant areas of natural vegetation',
+  '244':  'Agro-forestry areas',
+  '311':	'Forests, Broad-leaved forest',
+  '312':  'Forests, Coniferous forest',
+  '313':	'Forests, Mixed forest',
+  '321':	'Scrub and/or herbaceous vegetation: Natural grasslands',
+  '322':	'Scrub and/or herbaceous vegetation: Moors and heathland',
+  '323':	'Scrub and/or herbaceous vegetation: Sclerophyllous vegetation',
+  '324':	'Scrub and/or herbaceous vegetation: Transitional woodland-shrub',
+  '331':  'Open spaces with little or no vegetation > Beaches, dunes, sands',
+  '332':	'Open spaces with little or no vegetation > Bare rocks',
+  '333':  'Open spaces with little or no vegetation > Sparsely vegetated areas',
+  '334':	'Open spaces with little or no vegetation > Burnt areas',
+  '335':  'Open spaces with little or no vegetation > Glaciers and perpetual snow',
+  '411':  'Inland wetlands: Inland marshes',
+  '412':  'Inland wetlands: Peat bogs',
+  '421':	'Maritime wetlands: Salt marshes',
+  '422':	'Maritime wetlands: Salines',
+  '423':	'Maritime wetlands: Intertidal flats',
+  '511':	'Water courses',
+  '512':  'Inland waters',
+  '521':	'Coastal lagoons',
+  '522':	'Estuaries',
+  '523':	'Sea and ocean'
+});
+
+var classAreasCorineIII = classAreasCorineIII.map(function(item) {
+  var areaDictCorineIII = ee.Dictionary(item);
+  var classNumberCorineIII = ee.Number(areaDictCorineIII.get('Map')).format();
+  var classNameCorineIII = classNamesCorineIII.get(classNumberCorineIII);
+  var areaCorineIII = ee.Number(areaDictCorineIII.get('sum'));
+  return ee.Feature(null, {'class': classNumberCorineIII, 'class_name': classNameCorineIII, 'area': areaCorineIII});
+});
+
+var classAreaFcCorineIII = ee.FeatureCollection(classAreasCorineIII);
+
+// CHART the resulting FC
+// If the area is large: first Export FC as an Asset and import it once the export is finished
+
+// Bar Chart
+var areaChartCorineIII = ui.Chart.feature.byProperty({
+  features: classAreaFcCorineIII,
+  xProperties: ['area'],
+  seriesProperty: 'class_name',
+}).setChartType('ColumnChart')
+  .setOptions({
+    hAxis: {title: 'Classes'},
+    vAxis: {title: 'Area (sq m)'},
+    title: 'Area by Corine III Land Cover classes',
+    series: {
+        111: { color: '#e6004d'},
+        112: { color: '#ff0000'},
+        121: { color: '#cc4df2'},	
+        122: { color: '#cc0000'},	
+        123: { color: '#e6cccc'},	
+        124: { color: '#e6cce6'},	
+        131: { color: '#a600cc'},	
+        132: { color: '#a64dcc'},	
+        133: { color: '#ff4dff'},	
+        141: { color: '#ffa6ff'},	
+        142: { color: '#ffe6ff'},	
+        211: { color: '#ffffa8'},	
+        212: { color: '#ffff00'},	
+        213: { color: '#e6e600'},	
+        221: { color: '#e68000'},	
+        222: { color: '#f2a64d'},	
+        223: { color: '#e6a600'},	
+        231: { color: '#e6e64d'},	
+        241: { color: '#ffe6a6'},	
+        242: { color: '#ffe64d'},	
+        243: { color: '#e6cc4d'},	
+        244: { color: '#f2cca6'},	
+        311: { color: '#80ff00'},
+        312: { color: '#00a600'},	
+        313: { color: '#4dff00'},	
+        321: { color: '#ccf24d'},	
+        322: { color: '#a6ff80'},	
+        323: { color: '#a6e64d'},	
+        324: { color: '#a6f200'},	
+        331: { color: '#e6e6e6'},
+        332: { color: '#cccccc'},	
+        333: { color: '#ccffcc'},	
+        334: { color: '#000000'},	
+        335: { color: '#a6e6cc'},	
+        411: { color: '#a6a6ff'},	
+        412: { color: '#4d4dff'},	
+        421: { color: '#ccccff'},	
+        422: { color: '#e6e6ff'},	
+        423: { color: '#a6a6e6'},	
+        511: { color: '#00ccf2'},	
+        512: { color: '#80f2e6'},	
+        521: { color: '#00ffa6'},
+        522: { color: '#a6ffe6'},	
+        523: { color: '#e6f2ff'},	
+    }
+  });
+print(areaChartCorineIII); 
+
+// Pie Chart
+var paletteCorineIII = ['#e6004d', '#ff0000', '#cc4df2', '#cc0000', '#e6cccc', '#e6cce6',
+'#a600cc', '#a64dcc', '#ff4dff', '#ffa6ff', '#ffe6ff', '#ffffa8', '#ffff00', '#e6e600', '#e68000', 
+'#f2a64d', '#e6a600', '#e6e64d', '#ffe6a6', '#ffe64d', '#e6cc4d', '#f2cca6', '#80ff00', '#00a600',
+'#4dff00', '#ccf24d', '#a6ff80','#a6e64d', '#a6f200', '#e6e6e6', '#cccccc', '#ccffcc', '#000000', 
+'#a6e6cc', '#a6a6ff', '#4d4dff', '#ccccff', '#e6e6ff', '#a6a6e6', '#00ccf2', '#80f2e6', '#00ffa6',
+'#a6ffe6', '#e6f2ff'
+];
+
+var areaChartCorineIII = ui.Chart.feature.byFeature({
+  features: classAreaFcCorineIII,
+  xProperty: 'class_name',
+  yProperties: ['area']
+}).setChartType('PieChart')
+  .setOptions({
+    hAxis: {title: 'Classes'},
+    vAxis: {title: 'Area (sq m)'},
+    title: 'Percentage of Area by Corine III Land Cover classes',
+    series: {
+        111: { color: '#e6004d'},
+        112: { color: '#ff0000'},
+        121: { color: '#cc4df2'},	
+        122: { color: '#cc0000'},	
+        123: { color: '#e6cccc'},	
+        124: { color: '#e6cce6'},	
+        131: { color: '#a600cc'},	
+        132: { color: '#a64dcc'},	
+        133: { color: '#ff4dff'},	
+        141: { color: '#ffa6ff'},	
+        142: { color: '#ffe6ff'},	
+        211: { color: '#ffffa8'},	
+        212: { color: '#ffff00'},	
+        213: { color: '#e6e600'},	
+        221: { color: '#e68000'},	
+        222: { color: '#f2a64d'},	
+        223: { color: '#e6a600'},	
+        231: { color: '#e6e64d'},	
+        241: { color: '#ffe6a6'},	
+        242: { color: '#ffe64d'},	
+        243: { color: '#e6cc4d'},	
+        244: { color: '#f2cca6'},	
+        311: { color: '#80ff00'},
+        312: { color: '#00a600'},	
+        313: { color: '#4dff00'},	
+        321: { color: '#ccf24d'},	
+        322: { color: '#a6ff80'},	
+        323: { color: '#a6e64d'},	
+        324: { color: '#a6f200'},	
+        331: { color: '#e6e6e6'},
+        332: { color: '#cccccc'},	
+        333: { color: '#ccffcc'},	
+        334: { color: '#000000'},	
+        335: { color: '#a6e6cc'},	
+        411: { color: '#a6a6ff'},	
+        412: { color: '#4d4dff'},	
+        421: { color: '#ccccff'},	
+        422: { color: '#e6e6ff'},	
+        423: { color: '#a6a6e6'},	
+        511: { color: '#00ccf2'},	
+        512: { color: '#80f2e6'},	
+        521: { color: '#00ffa6'},
+        522: { color: '#a6ffe6'},	
+        523: { color: '#e6f2ff'},	
+    }
+  });
+print(areaChartCorineIII);
