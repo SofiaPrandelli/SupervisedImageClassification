@@ -22,7 +22,6 @@ print('Projection Guidonia ortophoto:', guid.projection());
 print('image geometry', ICguid.geometry());
 print('ICguid infos', ICguid.getInfo());
 
-
 var polygon = ICguid.geometry();
 Map.addLayer(polygon, {color: 'red'}, 'Study area');
 print('Mosaic Coordinates:', polygon);
@@ -61,7 +60,6 @@ var railbuff10_diss_area = railbuff10_diss.geometry().area();
 //var railbuff10_diss_AreaSqKm = ee.Number(railbuff10_diss_area).divide(1e6).round()
 print('Total area in the buffer (m2)', railbuff10_diss_area);
 
-
 //DOWNSCALING TIFF IMAGE
 print(guid.projection());
 
@@ -78,10 +76,9 @@ print('Guidonia reduced resolution:', guid_reduced.projection().nominalScale());
 var guid_filter = guid_reduced.clip(railbuff10);
 Map.addLayer(guid_filter, {}, 'Ortophoto Guidonia filtered');
 
-
 /////////// CREATE GROUND CONTROL POINTS using GUI tool //////////
 
-// uncomment next lines to create standardized layers, but add property "class" to every layer
+// Uncomment next lines to create standardized layers, but add property "class" to every layer
 // you can also import layer with points already created from other scripts
 
 //var rails = /* color: #a2adb1 */ee.FeatureCollection([]),
@@ -167,9 +164,7 @@ var connectedClassified =  classified.where(patchsize.lt(40),filtered);
 Map.addLayer(connectedClassified, {min: 0, max: 4, palette: ['#a2adb1', '#2b932c', '#6ae058', '#e0df3e', '#92cc61']}, 
   'LC calssification (processed using Connected Pixels)');
 
-
-// Feature Importance
-//*************************************************************
+///////// Feature Importance /////////
 
 // Run .explain() to see what the classifer looks like
 print('Explain classifier:', classifier.explain());
@@ -199,7 +194,7 @@ var chart = ui.Chart.feature.byProperty({
   });
 print(chart);
 
-// CALCULATE AREA BY CLASS
+//////// Calculate area by class /////////
 
 // Create a 2 band image with the area image and the classified image
 var areaImage = ee.Image.pixelArea().addBands(connectedClassified);
@@ -261,7 +256,6 @@ var areaChart = ui.Chart.feature.byProperty({
   });
 print(areaChart); 
 
-
 // Pie Chart
 var palette = ['#a2adb1', '#2b932c', '#6ae058', '#e0df3e', '#92cc61'];
 
@@ -277,7 +271,6 @@ var areaChart = ui.Chart.feature.byFeature({
     colors: palette
   });
 print(areaChart);
-
 
 /////////////// COPERNICUS CORINE LAND COVER LEVEL III DATA ANALYSIS ///////////////
 // 44 classes
