@@ -31,7 +31,7 @@ In this particular example, we are just looking at the trainAccuracy, which basi
 In the section of the script from line 197 to line 273, the sum of the areas in terms of square meters and percentage for each class of our classification is calculated; results can be displayed through bar chart and pie chart.
 
 ### Copernicus Corine Land Cover overview
-In the last section of the script, an additional overview of the test area is given by considering the Copernicus Corine Land Cover Level III datasets, that contains 44 categorical values of Land Use. Total areas for each of the 44 classes are calculated and displayed with charts. 
+In the last section of the script, an additional overview of the test area is given by considering the Copernicus Corine Land Cover Level III datasets, that contains 44 categorical values of Land Use. Total areas for each of the 44 classes are calculated and displayed by charts. 
 
 ### Contact
 For any queries, contact sofia.prandelli2@unibo.it
