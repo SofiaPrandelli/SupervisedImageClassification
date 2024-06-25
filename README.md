@@ -1,9 +1,13 @@
-# SupervisedImageClassification
+# Supervised Image Classification
 ### Summary
 Contains Google Earth Engine (GEE) JavaScript code to classify and quantify areas adjacent to rail infrastructures. The Supervised Image Classification was performed through the Machine Learning Random Forest Model, considering an area equal to the intersection of high resolution areial photos in raster format with Italian railways infrastructures in shapefile format. 
 
+### Preliminary operations
+Make sure to have activated the account on Google Earth Engine and to have correctly uploaded and renamed all files needed for analysis in the "Assets" section.
+
 ### Test area
-A mosaic of aerial images of a railway section in Guidonia Montecelio (Rome) was classified; the images were uploaded in the GEE platform and their resolution has been decreased to 1 meter. The region of interest (ROI) was defined by considering the geometry of the mosaic created. The images used are availabe upon request due to the large dimensons of the files. It is possible to change the test area by uploading in the GEE platform the georeferenced tiff aereal images of a new area of interest and by changing the parameters in line 17 of the provided script.
+A mosaic of aerial images of a railway section in Guidonia Montecelio (Rome) was classified; the images were uploaded in the GEE platform and their resolution has been decreased to 1 meter. The region of interest (ROI) was defined by considering the geometry of the mosaic created. The images used are availabe upon request due to the large dimensons of the files.
+It is possible to change the test area by uploading in the GEE platform the georeferenced tiff aereal images of a new area of interest and by changing the parameters in line 17 of the provided script.
 
 ### Railways infrastructures
 Data used for this analysis were downloaded from Geofabrik (http://download.geofabrik.de/europe/italy.html), a consulting and software development firm based in Karlsruhe, Germany, specialized in OpenStreetMap services: data are accurated and up-to-date (2024). Data has been pre-processed in the R software, by aggregating and filtering them by considering only suitable categories, corresponding to "rail", "light rail" and "narrow gauge" infrastructures. Sections on tunnel and bridges were also removed. Thereafter, the processed shapefile was uploaded in the GEE platform and filtered in the test area created, equivalent to the extent of the images used.
@@ -18,13 +22,16 @@ To simplify the procedure, it is possible to uncomment from line 84 to line 88 o
 
 <!-- Keep in mind that you want to encompass all spectral variances that are in a class. We will look into assessing the quality of polygons in the next section. In general, each class should be normally distributed and not overlapping substantially with any other class. da spiegare meglio -->
 
-### Supervised classification
+### Supervised Classification
 Using ee.Classifier.randomForest() function, it is possible to instantiate a classifier and train it on the training data specifying the features to use (training), the landcover categories as the classProperty we want to categorize the imagery into and the reflectance in Bands of the raster image as the inputProperties.
 After classifiyng the image (Script Lines from 122 to 133) and display the results (using the Inspector tool, it is possible to visualize the caracteristics of each classified pixel), we assess the Accuracy of the model and calculate the Confusion Matrix. 
-In this particular example, we are just looking at the trainAccuracy, which basically describes how well the classifier was able to correctly label resubstituted training data, i.e. data the classifier had already seen.
+In this particular example, we are just looking at the trainAccuracy, which basically describes how well the classifier was able to correctly label resubstituted training data (i.e. data that the classifier had already seen).
 
 ### Calculation of area by class
-In the last section of the script, the sum of the areas for each class of Land Cover is calculated in square meters, and results are displayed through bar chart or pie chart.
+In the section of the script from line 197 to line 273, the sum of the areas in terms of square meters and percentage for each class of our classification is calculated; results can be displayed through bar chart and pie chart.
+
+### Copernicus Corine Land Cover overview
+In the last section of the script, an additional overview of the test area is given by considering the Copernicus Corine Land Cover Level III datasets, that contains 44 categorical values of Land Use. Total areas for each of the 44 classes are calculated and displayed with charts. 
 
 ### Contact
 For any queries, contact sofia.prandelli2@unibo.it
