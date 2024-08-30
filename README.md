@@ -3,14 +3,15 @@
 Contains Google Earth Engine (GEE) JavaScript code to classify and quantify areas adjacent to rail infrastructures. The Supervised Image Classification was performed through the Machine Learning Random Forest Model, considering an area equal to the intersection of high resolution areial photos in raster format with Italian railways infrastructures in shapefile format. 
 
 ### Preliminary operations
-Make sure to have activated the account on Google Earth Engine and to have correctly uploaded and renamed all files needed for analysis in the "Assets" section.
+Make sure to have activated the account on Google Earth Engine and to have correctly uploaded and renamed all files needed for the analysis: copy the "Java Script Code" file from the folder to the "Script" section in your GEE account, by creating a new file; while in the "Assets" section, upload the raster images of the area of interest and the railroad shapefile.
 
 ### Test area
 A mosaic of aerial images of a railway section in Guidonia Montecelio (Rome) was classified; the images were uploaded in the GEE platform and their resolution has been decreased to 1 meter. The region of interest (ROI) was defined by considering the geometry of the mosaic created. The images used are availabe upon request due to the large dimensons of the files.
 It is possible to change the test area by uploading in the GEE platform the georeferenced tiff aereal images of a new area of interest and by changing the parameters in line 17 of the provided script.
 
 ### Railways infrastructures
-Data used for this analysis were downloaded from Geofabrik (http://download.geofabrik.de/europe/italy.html), a consulting and software development firm based in Karlsruhe, Germany, specialized in OpenStreetMap services: data are accurated and up-to-date (2024). Data has been pre-processed in the R software, by aggregating and filtering them by considering only suitable categories, corresponding to "rail", "light rail" and "narrow gauge" infrastructures. Sections on tunnel and bridges were also removed. Thereafter, the processed shapefile was uploaded in the GEE platform and filtered in the test area created, equivalent to the extent of the images used.
+Data used for this analysis were downloaded from Geofabrik (http://download.geofabrik.de/europe/italy.html), a consulting and software development firm based in Karlsruhe, Germany, specialized in OpenStreetMap services: data are accurated and up-to-date (2024). Data has been pre-processed in the R software, by aggregating and filtering them by considering only suitable categories, corresponding to "rail", "light rail" and "narrow gauge" infrastructures. Sections on tunnel and bridges were also removed. Thereafter, the processed shapefile was uploaded in the GEE platform and filtered in the test area created, equivalent to the extent of the images used. 
+The R script containing the changes made to the original shapefile and of the descriptive statistics regarding the types of rail infrastructure at the Italian level is available in the document “railway_filter_and_description.R”.
 
 ### Buffer zones
 The Supervised Classification was performed more than once, by filtering the mosaic with buffers around the railway infrastructure of different width. It is possible to change this parameter at line 50 of the script, that is actually setted at 10 meters.
@@ -32,6 +33,8 @@ In the section of the script from line 197 to line 273, the sum of the areas in 
 
 ### Copernicus Corine Land Cover overview
 In the last section of the script, an additional overview of the test area is given by considering the Copernicus Corine Land Cover Level III datasets, that contains 44 categorical values of Land Use. Total areas for each of the 44 classes are calculated and displayed by charts. 
+
+### 
 
 ### Contact
 For any queries, contact sofia.prandelli2@unibo.it
