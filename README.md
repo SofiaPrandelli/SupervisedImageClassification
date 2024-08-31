@@ -34,7 +34,8 @@ In the section of the script from line 197 to line 273, the sum of the areas in 
 ### Copernicus Corine Land Cover overview
 In the last section of the script, an additional overview of the test area is given by considering the Copernicus Corine Land Cover Level III datasets, that contains 44 categorical values of Land Use. Total areas for each of the 44 classes are calculated and displayed by charts. 
 
-### 
+### Data Paper
+A brief theoretical and pratical report to explain the specific study case used as line guides is attached under the name "Report_Guidonia".
 
 ### Contact
 For any queries, contact sofia.prandelli2@unibo.it
