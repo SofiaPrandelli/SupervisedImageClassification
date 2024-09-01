@@ -1,4 +1,4 @@
-# Supervised Image Classification
+# Supervised Image Classification and quantification of Soil Carbon Stock
 ### Summary
 Contains Google Earth Engine (GEE) JavaScript code to classify and quantify areas adjacent to rail infrastructures. The Supervised Image Classification was performed through the Machine Learning Random Forest Model, considering an area equal to the intersection of high resolution areial photos in raster format with Italian railways infrastructures in shapefile format. 
 
