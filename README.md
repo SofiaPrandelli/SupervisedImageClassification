@@ -10,7 +10,7 @@ A mosaic of aerial images of a railway section in Guidonia Montecelio (Rome) was
 It is possible to change the test area by uploading in the GEE platform the georeferenced tiff aereal images of a new area of interest and by changing the parameters in line 17 of the provided script.
 
 ### Railways infrastructures
-Data used for this analysis were downloaded from Geofabrik (http://download.geofabrik.de/europe/italy.html), a consulting and software development firm based in Karlsruhe, Germany, specialized in OpenStreetMap services: data are accurated and up-to-date (2024). Data has been pre-processed in the R software, by aggregating and filtering them by considering only suitable categories, corresponding to "rail", "light rail" and "narrow gauge" infrastructures. Sections on tunnel and bridges were also removed. Thereafter, the processed shapefile was uploaded in the GEE platform and filtered in the test area created, equivalent to the extent of the images used. 
+Data used for this analysis were downloaded from Geofabrik (http://download.geofabrik.de/europe/italy.html) (Geofabrik, D.S., 2017), a consulting and software development firm based in Karlsruhe, Germany, specialized in OpenStreetMap services: data are accurated and up-to-date (2024). Data has been pre-processed in the R software, by aggregating and filtering them by considering only suitable categories, corresponding to "rail", "light rail" and "narrow gauge" infrastructures. Sections on tunnel and bridges were also removed. Thereafter, the processed shapefile was uploaded in the GEE platform and filtered in the test area created, equivalent to the extent of the images used. 
 The R script containing the changes made to the original shapefile and of the descriptive statistics regarding the types of rail infrastructure at the Italian level is available in the document “railway_filter_and_description.R”.
 
 ### Buffer zones
@@ -32,7 +32,7 @@ In this particular example, we are just looking at the trainAccuracy, which basi
 In the section of the script from line 197 to line 273, the sum of the areas in terms of square meters and percentage for each class of our classification is calculated; results can be displayed through bar chart and pie chart.
 
 ### Copernicus Corine Land Cover overview
-In the last section of the script, an additional overview of the test area is given by considering the Copernicus Corine Land Cover Level III datasets, that contains 44 categorical values of Land Use. Total areas for each of the 44 classes are calculated and displayed by charts. 
+In the last section of the script, an additional overview of the test area is given by considering the Copernicus Corine Land Cover Level III datasets, that contains 44 categorical values of Land Use (Copernicus, E.U., 2018). Total areas for each of the 44 classes are calculated and displayed by charts. 
 
 ### Data Paper
 A brief theoretical and pratical report to explain the specific study case used as line guides in GEE for the Supervised Image Classification is attached under the name "Report_Guidonia".
@@ -49,8 +49,10 @@ These findings are in line with broader patterns observed in Italian landscapes.
 For any queries, contact sofia.prandelli2@unibo.it
 
 ### References
+- Copernicus, E. U. (2018). Copernicus land monitoring service. Corine Land Cover data.
 - Chiti, T., Gardin, L., Perugini, L., Quaratino, R., Vaccari, F. P., Miglietta, F., & Valentini, R. (2012). Soil organic carbon stock assessment for the different cropland land uses in Italy. Biology and Fertility of Soils, 48, 9-17.
 - Cunningham, S. C., Cavagnaro, T. R., Mac Nally, R., Paul, K. I., Baker, P. J., Beringer, J., ... & Thompson, R. M. (2015). Reforestation with native mixed‐species plantings in a temperate continental climate effectively sequesters and stabilizes carbon within decades. Global Change Biology, 21(4), 1552-1566.
+- Geofabrik, D. S. (2017). Open Street Map.
 - Lal, R. (2004). Soil carbon sequestration to mitigate climate change. Geoderma, 123(1-2), 1-22.
 
 
