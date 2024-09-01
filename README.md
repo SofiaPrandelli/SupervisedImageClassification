@@ -47,3 +47,12 @@ These findings are in line with broader patterns observed in Italian landscapes.
 
 ### Contact
 For any queries, contact sofia.prandelli2@unibo.it
+
+### References
+- Chiti, T., Gardin, L., Perugini, L., Quaratino, R., Vaccari, F. P., Miglietta, F., & Valentini, R. (2012). Soil organic carbon stock assessment for the different cropland land uses in Italy. Biology and Fertility of Soils, 48, 9-17.
+- Cunningham, S. C., Cavagnaro, T. R., Mac Nally, R., Paul, K. I., Baker, P. J., Beringer, J., ... & Thompson, R. M. (2015). Reforestation with native mixed‐species plantings in a temperate continental climate effectively sequesters and stabilizes carbon within decades. Global Change Biology, 21(4), 1552-1566.
+- Lal, R. (2004). Soil carbon sequestration to mitigate climate change. Geoderma, 123(1-2), 1-22.
+
+
+
+
