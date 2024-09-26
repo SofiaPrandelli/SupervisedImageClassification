@@ -47,6 +47,8 @@ The file "mean_c_val_principalclasses_macrofunction.xlsm" contains the average v
 - Values of the class "bare" were obtained by calculating the mean value between values of the classes"Open spaces with little or no vegetation > Bare rocks" and "Open spaces with little or no vegetation > Sparsely vegetated areas".
 The "rail" class was excluded by this calculation, since it was considered a carbon stock soil for this kind of land cover equal to 0 C T/Ha.
 
+The R script containing all analyses for the creation of carbon stock soil datasets is available among the attachments as "c_stock_prov_level.R".
+
 These findings are in line with broader patterns observed in Italian landscapes. According to Chiti et al. (2012), Soil Organic Carbon stocks vary significantly across different climatic regions. The highest SOC stocks were found in the temperate sub-oceanic regions' lowland depressions and in the alluvial soils of the warm temperate continental climate, while the lowest stocks were observed in the Mediterranean sub-continental region. Agroforestry systems show SOC stocks ranging from 40.1 ± 12.3 Mg C ha−1 in the Mediterranean sub-tropical region to 70.1 ± 23.3 Mg C ha−1 in the temperate mountain climate, reflecting significant differences based on climate type. Generally, mature forests typically have substantially larger soil carbon stocks than agricultural fields (Lal, 2004), and natural regeneration of abandoned fields has the potential to sequester significant amounts of soil carbon over a century (Poulton et al., 2003).
 
 ### Contact
