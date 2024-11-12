@@ -14,7 +14,7 @@ Data used for this analysis were downloaded from Geofabrik (http://download.geof
 The R script containing the changes made to the original shapefile and of the descriptive statistics regarding the types of rail infrastructure at the Italian level is available in the document “railway_filter_and_description.R”.
 
 ### Buffer zones
-The Supervised Classification was performed more than once, by filtering the mosaic with buffers around the railway infrastructure of different width. It is possible to change this parameter at line 50 of the script, that is actually setted at 10 meters.
+The Supervised Classification was performed more than once, by filtering the mosaic with buffers around the railway infrastructure of different width. It is possible to change this parameter at line 50 of the script, that is currently setted at 10 meters.
 
 ### Groun Control Points
 Once the image is ready, we need to create the points that represent each landcover class in the classification. In this case, the classes created were: rails, trees, grass, bare and shrubs vegetation.
